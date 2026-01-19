@@ -29,7 +29,7 @@ html, body {
 #root {
   width: 100%;
   min-height: 100vh;
-  display: flex;       /* This centers the App vertically */
+  display: flex !important;       /* This centers the App vertically */
   align-items: center !important; /* This centers the App vertically */
   justify-content: center !important; /* This centers the App horizontally */
 }
