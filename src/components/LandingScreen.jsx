@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { generateRoomId } from '../utils';
 import { ref, set } from 'firebase/database';
 import { db } from '../firebase';
-import { Play, LogIn } from 'lucide-react';
+import { Play, LogIn, ArrowRight } from 'lucide-react';
 
 export default function LandingScreen({ onHost, onJoin, joinToken }) {
   const [name, setName] = useState("");
@@ -28,30 +28,27 @@ export default function LandingScreen({ onHost, onJoin, joinToken }) {
     onHost(newCode);
   };
 
-  // --- JOIN MODE (QR SCANNED) ---
+  // --- JOIN MODE ---
   if (detectedRoom) {
     return (
-      <div className="container">
-        <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
-          <h2 style={{ textAlign: 'center', marginBottom: '0' }}>JOINING ROOM</h2>
-          <div style={{ textAlign: 'center', fontSize: '2rem', fontWeight: 'bold', color: '#4f46e5' }}>
-            {detectedRoom}
-          </div>
+      <div className="app-container">
+        <div className="card">
+          <span className="badge" style={{color: '#4f46e5', background: 'rgba(79, 70, 229, 0.1)'}}>JOINING ROOM</span>
+          <div style={{fontSize: '3rem', fontWeight: '900', fontFamily: 'monospace'}}>{detectedRoom}</div>
           
-          <div>
-            <label style={{ display: 'block', marginBottom: '10px', color: '#888' }}>YOUR NAME</label>
+          <div className="full-width">
+            <label style={{display: 'block', textAlign: 'left', marginBottom: '8px', color: '#888', fontSize: '0.9rem', fontWeight: 'bold'}}>NICKNAME</label>
             <input 
-              className="large-input"
+              className="input-lg"
+              placeholder="YOUR NAME"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="NICKNAME"
               maxLength={12}
-              autoFocus
             />
           </div>
 
           <button className="btn" onClick={() => onJoin(detectedRoom, name)} disabled={!name}>
-            ENTER LOBBY
+            ENTER GAME
           </button>
         </div>
       </div>
@@ -60,20 +57,22 @@ export default function LandingScreen({ onHost, onJoin, joinToken }) {
 
   // --- MAIN MENU ---
   return (
-    <div className="container">
-      <h1 className="title">MAFIA</h1>
-      <p className="subtitle">The classic party game, reimagined.</p>
+    <div className="app-container">
+      <div style={{textAlign: 'center', marginBottom: '20px'}}>
+        <h1>MAFIA</h1>
+        <p style={{fontSize: '1.2rem', marginTop: '10px'}}>The classic party game</p>
+      </div>
 
-      <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
-        <button className="btn" onClick={handleCreateGame} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-          <Play size={20} /> HOST GAME
+      <div className="card">
+        <button className="btn" onClick={handleCreateGame} style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', background: '#ef4444'}}>
+          <Play fill="white" size={20} /> HOST NEW GAME
         </button>
         
-        <div style={{ textAlign: 'center', color: '#444', fontWeight: 'bold' }}>— OR —</div>
-
-        <div style={{ textAlign: 'center', color: '#888' }}>
-          Scan a host's QR code to join.
+        <div style={{width: '100%', borderTop: '1px solid #333', margin: '10px 0', position: 'relative'}}>
+          <span style={{position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#121212', padding: '0 10px', color: '#666', fontSize: '0.8rem', fontWeight: 'bold'}}>OR</span>
         </div>
+
+        <p style={{fontSize: '0.9rem'}}>Scan a Host's QR code to join.</p>
       </div>
     </div>
   );

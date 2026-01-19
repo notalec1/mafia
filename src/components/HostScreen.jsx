@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ref, onValue, update } from 'firebase/database';
 import { db } from '../firebase';
 import { shuffleArray } from '../utils';
-import { Users, Shield, Sword, Search, Zap } from 'lucide-react';
+import { Users, Shield, Sword, Search, Play } from 'lucide-react';
 
 export default function HostScreen({ roomCode }) {
   const [game, setGame] = useState(null);
@@ -27,7 +27,7 @@ export default function HostScreen({ roomCode }) {
     }
   }, [game?.players]);
 
-  if (!game) return <div className="container">Loading...</div>;
+  if (!game) return <div className="app-container">Loading...</div>;
 
   const players = game.players ? Object.values(game.players) : [];
   const joinUrl = window.location.href.split('?')[0] + `?q=${btoa(JSON.stringify({r: roomCode}))}`;
@@ -54,85 +54,81 @@ export default function HostScreen({ roomCode }) {
     update(ref(db), updates);
   };
 
-  // --- LOBBY VIEW ---
+  // --- LOBBY ---
   if (game.gameState === "LOBBY") {
     return (
-      <div className="container" style={{ justifyContent: 'flex-start', paddingTop: '4rem' }}>
-        
-        {/* BIG ROOM CODE HEADER */}
-        <div className="room-code-display">
-          <span style={{ color: '#888', letterSpacing: '4px', marginBottom: '10px' }}>ROOM CODE</span>
-          <div className="code-box">{roomCode}</div>
+      <div className="app-container wide">
+        <div style={{textAlign: 'center', marginBottom: '10px'}}>
+          <h3>ROOM CODE</h3>
+          <div style={{fontSize: '5rem', fontWeight: '900', fontFamily: 'monospace', letterSpacing: '5px', lineHeight: '1'}}>{roomCode}</div>
         </div>
 
-        <div className="host-grid">
+        <div className="host-layout">
           {/* LEFT: QR & PLAYERS */}
           <div className="card">
-            <div style={{ background: 'white', padding: '1rem', borderRadius: '12px', alignSelf: 'center' }}>
-              <QRCodeSVG value={joinUrl} size={200} />
+            <div style={{background: 'white', padding: '15px', borderRadius: '15px'}}>
+              <QRCodeSVG value={joinUrl} size={220} />
             </div>
             
-            <div style={{ marginTop: '1rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
-                <Users size={20} color="#888" />
-                <span style={{ fontWeight: 'bold' }}>PLAYERS ({players.length})</span>
+            <div className="full-width">
+              <div className="row" style={{borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '10px'}}>
+                <div style={{display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 'bold'}}><Users size={18}/> LOBBY</div>
+                <div className="badge">{players.length} READY</div>
               </div>
-              <div className="player-list">
-                {players.length === 0 && <span style={{ color: '#555', fontStyle: 'italic' }}>Waiting for players...</span>}
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center'}}>
+                {players.length === 0 && <span style={{fontStyle: 'italic', color: '#666'}}>Waiting for players...</span>}
                 {players.map(p => (
-                  <div key={p.id} className="player-tag">{p.name}</div>
+                  <span key={p.id} className="badge" style={{background: '#222', padding: '8px 16px'}}>{p.name}</span>
                 ))}
               </div>
             </div>
           </div>
 
           {/* RIGHT: SETTINGS */}
-          <div className="card" style={{ justifyContent: 'space-between' }}>
-            <div>
-              <h3 style={{ marginTop: 0 }}>GAME SETTINGS</h3>
+          <div className="card" style={{justifyContent: 'space-between'}}>
+            <div className="full-width">
+              <h3 style={{marginBottom: '20px', textAlign: 'left'}}>GAME CONFIG</h3>
               
-              <div className="setting-row">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Sword size={18} color="#ef4444" /> Mafia
-                </span>
-                <div className="counter-controls">
-                  <button className="counter-btn" onClick={() => setConfig({...config, mafia: Math.max(0, config.mafia-1)})}>-</button>
-                  <span>{config.mafia}</span>
-                  <button className="counter-btn" onClick={() => setConfig({...config, mafia: config.mafia+1})}>+</button>
+              <div style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
+                <div className="row" style={{background: '#1a1a1a', padding: '10px', borderRadius: '12px'}}>
+                  <span style={{display: 'flex', gap: '10px', fontWeight: 'bold'}}><Sword size={20} color="#ef4444"/> Mafia</span>
+                  <div className="counter">
+                    <button onClick={() => setConfig({...config, mafia: Math.max(0, config.mafia-1)})}>-</button>
+                    <span>{config.mafia}</span>
+                    <button onClick={() => setConfig({...config, mafia: config.mafia+1})}>+</button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="setting-row">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Shield size={18} color="#22c55e" /> Doctor
-                </span>
-                <div className="counter-controls">
-                  <button className="counter-btn" onClick={() => setConfig({...config, doctor: Math.max(0, config.doctor-1)})}>-</button>
-                  <span>{config.doctor}</span>
-                  <button className="counter-btn" onClick={() => setConfig({...config, doctor: config.doctor+1})}>+</button>
+                <div className="row" style={{background: '#1a1a1a', padding: '10px', borderRadius: '12px'}}>
+                  <span style={{display: 'flex', gap: '10px', fontWeight: 'bold'}}><Shield size={20} color="#22c55e"/> Doctor</span>
+                  <div className="counter">
+                    <button onClick={() => setConfig({...config, doctor: Math.max(0, config.doctor-1)})}>-</button>
+                    <span>{config.doctor}</span>
+                    <button onClick={() => setConfig({...config, doctor: config.doctor+1})}>+</button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="setting-row">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Search size={18} color="#3b82f6" /> Detective
-                </span>
-                <div className="counter-controls">
-                  <button className="counter-btn" onClick={() => setConfig({...config, detective: Math.max(0, config.detective-1)})}>-</button>
-                  <span>{config.detective}</span>
-                  <button className="counter-btn" onClick={() => setConfig({...config, detective: config.detective+1})}>+</button>
+                <div className="row" style={{background: '#1a1a1a', padding: '10px', borderRadius: '12px'}}>
+                  <span style={{display: 'flex', gap: '10px', fontWeight: 'bold'}}><Search size={20} color="#3b82f6"/> Detective</span>
+                  <div className="counter">
+                    <button onClick={() => setConfig({...config, detective: Math.max(0, config.detective-1)})}>-</button>
+                    <span>{config.detective}</span>
+                    <button onClick={() => setConfig({...config, detective: config.detective+1})}>+</button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="setting-row" onClick={() => setConfig({...config, peacefulFirstNight: !config.peacefulFirstNight})} style={{ cursor: 'pointer', border: config.peacefulFirstNight ? '1px solid #22c55e' : '1px solid transparent' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Zap size={18} color={config.peacefulFirstNight ? "#22c55e" : "#666"} /> Peaceful Night 1
-                </span>
-                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: config.peacefulFirstNight ? '#22c55e' : '#333' }}></div>
+                <div 
+                  onClick={() => setConfig({...config, peacefulFirstNight: !config.peacefulFirstNight})}
+                  className="row" 
+                  style={{background: '#1a1a1a', padding: '10px', borderRadius: '12px', cursor: 'pointer', border: config.peacefulFirstNight ? '1px solid #22c55e' : '1px solid transparent'}}
+                >
+                   <span style={{fontWeight: 'bold', color: config.peacefulFirstNight ? '#22c55e' : '#888'}}>Peaceful Night 1</span>
+                   <div style={{width: '16px', height: '16px', borderRadius: '50%', background: config.peacefulFirstNight ? '#22c55e' : '#333'}}></div>
+                </div>
               </div>
             </div>
 
-            <button className="btn" onClick={startGame} disabled={players.length < 2}>
+            <button className="btn" onClick={startGame} disabled={players.length < 2} style={{background: '#22c55e'}}>
               START GAME
             </button>
           </div>
@@ -141,27 +137,26 @@ export default function HostScreen({ roomCode }) {
     );
   }
 
-  // --- GAME IN PROGRESS VIEW ---
+  // --- GAME IN PROGRESS ---
   return (
-    <div className="container">
-      <div style={{ textAlign: 'center' }}>
-        <h2 style={{ color: '#888', letterSpacing: '4px', marginBottom: '20px' }}>CURRENT PHASE</h2>
-        <h1 style={{ fontSize: '5rem', fontWeight: '900', lineHeight: '1' }}>{game.publicMessage}</h1>
+    <div className="app-container wide">
+      <div style={{textAlign: 'center', margin: '40px 0'}}>
+        <h3>CURRENT PHASE</h3>
+        <h1 style={{fontSize: '4rem', marginTop: '10px'}}>{game.publicMessage}</h1>
       </div>
       
-      {/* Visual Grid of players for TV */}
-      <div className="host-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', width: '100%' }}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '15px', width: '100%'}}>
         {players.map(p => (
-           <div key={p.id} style={{ 
-              background: '#222', 
-              padding: '1rem', 
-              borderRadius: '12px', 
-              textAlign: 'center',
-              opacity: p.isAlive ? 1 : 0.5,
-              border: !p.isAlive ? '1px solid #ef4444' : '1px solid #333'
+           <div key={p.id} style={{
+             background: '#1a1a1a',
+             padding: '20px',
+             borderRadius: '16px',
+             textAlign: 'center',
+             border: !p.isAlive ? '1px solid #ef4444' : '1px solid #333',
+             opacity: p.isAlive ? 1 : 0.5
            }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{p.isAlive ? '🙂' : '💀'}</div>
-              <div style={{ fontWeight: 'bold' }}>{p.name}</div>
+              <div style={{fontSize: '2rem', marginBottom: '10px'}}>{p.isAlive ? '🙂' : '💀'}</div>
+              <div style={{fontWeight: 'bold'}}>{p.name}</div>
            </div>
         ))}
       </div>
