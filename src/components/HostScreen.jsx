@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { ref, onValue, update } from 'firebase/database';
 import { db } from '../firebase';
 import { shuffleArray } from '../utils';
-import { Settings, Users, Shield, Sword, Search, Play, Zap, Scan } from 'lucide-react';
+import { Users, Shield, Sword, Search, Zap } from 'lucide-react';
 
 export default function HostScreen({ roomCode }) {
   const [game, setGame] = useState(null);
@@ -27,7 +27,7 @@ export default function HostScreen({ roomCode }) {
     }
   }, [game?.players]);
 
-  if (!game) return <div className="host-wrapper">Loading...</div>;
+  if (!game) return <div className="container">Loading...</div>;
 
   const players = game.players ? Object.values(game.players) : [];
   const joinUrl = window.location.href.split('?')[0] + `?q=${btoa(JSON.stringify({r: roomCode}))}`;
@@ -54,133 +54,116 @@ export default function HostScreen({ roomCode }) {
     update(ref(db), updates);
   };
 
-  if (game.gameState !== "LOBBY") {
+  // --- LOBBY VIEW ---
+  if (game.gameState === "LOBBY") {
     return (
-      <div className="ingame-wrapper">
-        <h1 className="ingame-message">{game.publicMessage}</h1>
-        <div className="player-grid">
-          {players.map(p => (
-            <div key={p.id} className={`player-card ${!p.isAlive ? 'dead' : ''}`}>
-              {p.name}
+      <div className="container" style={{ justifyContent: 'flex-start', paddingTop: '4rem' }}>
+        
+        {/* BIG ROOM CODE HEADER */}
+        <div className="room-code-display">
+          <span style={{ color: '#888', letterSpacing: '4px', marginBottom: '10px' }}>ROOM CODE</span>
+          <div className="code-box">{roomCode}</div>
+        </div>
+
+        <div className="host-grid">
+          {/* LEFT: QR & PLAYERS */}
+          <div className="card">
+            <div style={{ background: 'white', padding: '1rem', borderRadius: '12px', alignSelf: 'center' }}>
+              <QRCodeSVG value={joinUrl} size={200} />
             </div>
-          ))}
+            
+            <div style={{ marginTop: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+                <Users size={20} color="#888" />
+                <span style={{ fontWeight: 'bold' }}>PLAYERS ({players.length})</span>
+              </div>
+              <div className="player-list">
+                {players.length === 0 && <span style={{ color: '#555', fontStyle: 'italic' }}>Waiting for players...</span>}
+                {players.map(p => (
+                  <div key={p.id} className="player-tag">{p.name}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT: SETTINGS */}
+          <div className="card" style={{ justifyContent: 'space-between' }}>
+            <div>
+              <h3 style={{ marginTop: 0 }}>GAME SETTINGS</h3>
+              
+              <div className="setting-row">
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Sword size={18} color="#ef4444" /> Mafia
+                </span>
+                <div className="counter-controls">
+                  <button className="counter-btn" onClick={() => setConfig({...config, mafia: Math.max(0, config.mafia-1)})}>-</button>
+                  <span>{config.mafia}</span>
+                  <button className="counter-btn" onClick={() => setConfig({...config, mafia: config.mafia+1})}>+</button>
+                </div>
+              </div>
+
+              <div className="setting-row">
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Shield size={18} color="#22c55e" /> Doctor
+                </span>
+                <div className="counter-controls">
+                  <button className="counter-btn" onClick={() => setConfig({...config, doctor: Math.max(0, config.doctor-1)})}>-</button>
+                  <span>{config.doctor}</span>
+                  <button className="counter-btn" onClick={() => setConfig({...config, doctor: config.doctor+1})}>+</button>
+                </div>
+              </div>
+
+              <div className="setting-row">
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Search size={18} color="#3b82f6" /> Detective
+                </span>
+                <div className="counter-controls">
+                  <button className="counter-btn" onClick={() => setConfig({...config, detective: Math.max(0, config.detective-1)})}>-</button>
+                  <span>{config.detective}</span>
+                  <button className="counter-btn" onClick={() => setConfig({...config, detective: config.detective+1})}>+</button>
+                </div>
+              </div>
+
+              <div className="setting-row" onClick={() => setConfig({...config, peacefulFirstNight: !config.peacefulFirstNight})} style={{ cursor: 'pointer', border: config.peacefulFirstNight ? '1px solid #22c55e' : '1px solid transparent' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <Zap size={18} color={config.peacefulFirstNight ? "#22c55e" : "#666"} /> Peaceful Night 1
+                </span>
+                <div style={{ width: '20px', height: '20px', borderRadius: '50%', background: config.peacefulFirstNight ? '#22c55e' : '#333' }}></div>
+              </div>
+            </div>
+
+            <button className="btn" onClick={startGame} disabled={players.length < 2}>
+              START GAME
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // --- LOBBY VIEW ---
+  // --- GAME IN PROGRESS VIEW ---
   return (
-    <div className="host-wrapper">
+    <div className="container">
+      <div style={{ textAlign: 'center' }}>
+        <h2 style={{ color: '#888', letterSpacing: '4px', marginBottom: '20px' }}>CURRENT PHASE</h2>
+        <h1 style={{ fontSize: '5rem', fontWeight: '900', lineHeight: '1' }}>{game.publicMessage}</h1>
+      </div>
       
-      {/* HEADER */}
-      <div className="room-header">
-        <div className="room-label">Room Code</div>
-        <div className="room-code">{roomCode}</div>
-      </div>
-
-      <div className="host-grid">
-        
-        {/* LEFT COLUMN: JOINING INFO */}
-        <div className="ui-card">
-          <h2 className="card-title">
-            <Scan size={24} /> Scan to Join
-          </h2>
-          
-          <div className="qr-container">
-            <div className="qr-box">
-              <QRCodeSVG value={joinUrl} size={240} />
-            </div>
-          </div>
-
-          <div className="lobby-status">
-            <div className="lobby-header">
-              <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                <Users size={18} /> Lobby
-              </span>
-              <span>{players.length} Connected</span>
-            </div>
-
-            {players.length === 0 ? (
-              <div style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem' }}>
-                Waiting for players to connect...
-              </div>
-            ) : (
-              <div className="player-pills">
-                {players.map(p => (
-                  <div key={p.id} className="player-pill">
-                    {p.name}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: SETTINGS */}
-        <div className="ui-card">
-          <h2 className="card-title">
-            <Settings size={24} /> Game Config
-          </h2>
-
-          <div className="config-list">
-            <CounterRow 
-              label="Mafia" 
-              icon={<Sword size={22} color="var(--danger)" />} 
-              value={config.mafia} 
-              onChange={(v) => setConfig({...config, mafia: v})} 
-            />
-            <CounterRow 
-              label="Doctor" 
-              icon={<Shield size={22} color="var(--success)" />} 
-              value={config.doctor} 
-              onChange={(v) => setConfig({...config, doctor: v})} 
-            />
-            <CounterRow 
-              label="Detective" 
-              icon={<Search size={22} color="var(--primary)" />} 
-              value={config.detective} 
-              onChange={(v) => setConfig({...config, detective: v})} 
-            />
-
-            <div className="config-item" onClick={() => setConfig({...config, peacefulFirstNight: !config.peacefulFirstNight})} style={{cursor: 'pointer'}}>
-              <div className="config-label">
-                <Zap size={22} color={config.peacefulFirstNight ? "var(--success)" : "var(--text-muted)"} />
-                <span style={{ color: config.peacefulFirstNight ? 'var(--success)' : 'var(--text-main)' }}>Peaceful Night 1</span>
-              </div>
-              <div className={`toggle-switch ${config.peacefulFirstNight ? 'on' : ''}`}>
-                <div className="toggle-knob" />
-              </div>
-            </div>
-          </div>
-
-          <button 
-            className="btn-start"
-            disabled={players.length < 2}
-            onClick={startGame}
-          >
-            <Play size={24} fill="currentColor" />
-            {players.length < 2 ? "Need 2+ Players" : "Start Game"}
-          </button>
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-// Helper Component for the Counters
-function CounterRow({ label, icon, value, onChange }) {
-  return (
-    <div className="config-item">
-      <div className="config-label">
-        {icon}
-        <span>{label}</span>
-      </div>
-      <div className="counter-wrap">
-        <button onClick={() => onChange(Math.max(0, value - 1))} className="btn-counter">-</button>
-        <span className="counter-val">{value}</span>
-        <button onClick={() => onChange(value + 1)} className="btn-counter">+</button>
+      {/* Visual Grid of players for TV */}
+      <div className="host-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', width: '100%' }}>
+        {players.map(p => (
+           <div key={p.id} style={{ 
+              background: '#222', 
+              padding: '1rem', 
+              borderRadius: '12px', 
+              textAlign: 'center',
+              opacity: p.isAlive ? 1 : 0.5,
+              border: !p.isAlive ? '1px solid #ef4444' : '1px solid #333'
+           }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{p.isAlive ? '🙂' : '💀'}</div>
+              <div style={{ fontWeight: 'bold' }}>{p.name}</div>
+           </div>
+        ))}
       </div>
     </div>
   );
